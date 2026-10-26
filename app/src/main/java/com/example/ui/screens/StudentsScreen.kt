@@ -252,6 +252,10 @@ fun StudentsScreen(
 
     // Add Student Dialog Form
     if (showAddStudentDialog) {
+      val addStudentDuplicate = newStudentName.isNotBlank() && selectedGroupForNewStudent != null &&
+        state.students.any {
+          it.groupName == selectedGroupForNewStudent && it.name.trim().equals(newStudentName.trim(), ignoreCase = true)
+        }
       AlertDialog(
         onDismissRequest = { showAddStudentDialog = false },
         title = { Text("Add New Student", fontWeight = FontWeight.Bold) },
@@ -262,6 +266,10 @@ fun StudentsScreen(
               onValueChange = { newStudentName = it },
               label = { Text("Full Name *") },
               placeholder = { Text("e.g. Aliyev Muhammad") },
+              isError = addStudentDuplicate,
+              supportingText = {
+                if (addStudentDuplicate) Text("$selectedGroupForNewStudent already has a student with this name")
+              },
               singleLine = true,
               modifier = Modifier
                 .fillMaxWidth()
@@ -319,7 +327,7 @@ fun StudentsScreen(
           Button(
             onClick = {
               val targetGroup = selectedGroupForNewStudent
-              if (newStudentName.isNotBlank() && targetGroup != null) {
+              if (newStudentName.isNotBlank() && targetGroup != null && !addStudentDuplicate) {
                 viewModel.addStudent(
                   name = newStudentName,
                   studentIdNumber = newStudentID,
@@ -330,7 +338,7 @@ fun StudentsScreen(
                 showAddStudentDialog = false
               }
             },
-            enabled = newStudentName.isNotBlank() && selectedGroupForNewStudent != null,
+            enabled = newStudentName.isNotBlank() && selectedGroupForNewStudent != null && !addStudentDuplicate,
             modifier = Modifier.testTag("btn_save_student")
           ) {
             Text("Add Student")
@@ -347,6 +355,9 @@ fun StudentsScreen(
     // Edit Student Dialog
     editingStudent?.let { student ->
       var editName by remember { mutableStateOf(student.name) }
+      val editDuplicate = editName.isNotBlank() && state.students.any {
+        it.id != student.id && it.groupName == student.groupName && it.name.trim().equals(editName.trim(), ignoreCase = true)
+      }
       AlertDialog(
         onDismissRequest = { editingStudent = null },
         title = { Text("✏️ Edit Student Name", fontWeight = FontWeight.Bold) },
@@ -355,17 +366,22 @@ fun StudentsScreen(
             value = editName,
             onValueChange = { editName = it },
             label = { Text("Student Full Name") },
+            isError = editDuplicate,
+            supportingText = { if (editDuplicate) Text("${student.groupName} already has a student with this name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
           )
         },
         confirmButton = {
-          Button(onClick = {
-            if (editName.isNotBlank()) {
-              viewModel.updateStudent(student.id, editName)
-              editingStudent = null
-            }
-          }) {
+          Button(
+            onClick = {
+              if (editName.isNotBlank() && !editDuplicate) {
+                viewModel.updateStudent(student.id, editName)
+                editingStudent = null
+              }
+            },
+            enabled = editName.isNotBlank() && !editDuplicate
+          ) {
             Text("Save Changes")
           }
         },
@@ -383,6 +399,9 @@ fun StudentsScreen(
         mutableStateOf(state.groups.firstOrNull { it.name != student.groupName }?.name ?: student.groupName)
       }
       var moveDropdownExpanded by remember { mutableStateOf(false) }
+      val moveDuplicate = state.students.any {
+        it.id != student.id && it.groupName == targetGroup && it.name.trim().equals(student.name.trim(), ignoreCase = true)
+      }
 
       AlertDialog(
         onDismissRequest = { movingStudent = null },
@@ -412,6 +431,13 @@ fun StudentsScreen(
                 }
               }
             }
+            if (moveDuplicate) {
+              Text(
+                text = "$targetGroup already has a student named '${student.name}'",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+              )
+            }
           }
         },
         confirmButton = {
@@ -420,7 +446,7 @@ fun StudentsScreen(
               viewModel.moveStudent(student.id, targetGroup)
               movingStudent = null
             },
-            enabled = targetGroup != student.groupName
+            enabled = targetGroup != student.groupName && !moveDuplicate
           ) {
             Text("Move Student")
           }
@@ -439,6 +465,9 @@ fun StudentsScreen(
         mutableStateOf(state.groups.firstOrNull { it.name != student.groupName }?.name ?: "")
       }
       var addDropdownExpanded by remember { mutableStateOf(false) }
+      val addDuplicate = additionalGroup.isNotBlank() && state.students.any {
+        it.id != student.id && it.groupName == additionalGroup && it.name.trim().equals(student.name.trim(), ignoreCase = true)
+      }
 
       AlertDialog(
         onDismissRequest = { addingToGroupStudent = null },
@@ -468,6 +497,13 @@ fun StudentsScreen(
                 }
               }
             }
+            if (addDuplicate) {
+              Text(
+                text = "$additionalGroup already has a student named '${student.name}'",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+              )
+            }
           }
         },
         confirmButton = {
@@ -476,7 +512,7 @@ fun StudentsScreen(
               viewModel.addStudentToAnotherGroup(student.id, additionalGroup)
               addingToGroupStudent = null
             },
-            enabled = additionalGroup.isNotBlank() && additionalGroup != student.groupName
+            enabled = additionalGroup.isNotBlank() && additionalGroup != student.groupName && !addDuplicate
           ) {
             Text("Enroll in Group")
           }

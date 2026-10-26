@@ -627,13 +627,25 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
   fun updateStudent(studentId: String, newName: String) {
     val clean = newName.trim()
     if (clean.isEmpty()) return
-    viewModelScope.launch { dao.updateStudentName(studentId, clean) }
+    viewModelScope.launch {
+      val student = dao.getBackupStudents().firstOrNull { it.id == studentId } ?: return@launch
+      val duplicate = dao.getBackupStudents().any {
+        it.id != studentId && it.groupId == student.groupId && it.name.trim().equals(clean, ignoreCase = true)
+      }
+      if (duplicate) return@launch
+      dao.updateStudentName(studentId, clean)
+    }
   }
 
   fun moveStudent(studentId: String, newGroupName: String) {
     if (newGroupName.isBlank()) return
     viewModelScope.launch {
+      val student = dao.getBackupStudents().firstOrNull { it.id == studentId } ?: return@launch
       val group = dao.getBackupGroups().firstOrNull { it.name == newGroupName } ?: return@launch
+      val duplicate = dao.getBackupStudents().any {
+        it.id != studentId && it.groupId == group.id && it.name.trim().equals(student.name.trim(), ignoreCase = true)
+      }
+      if (duplicate) return@launch
       dao.updateStudentGroup(studentId, group.id)
     }
   }
