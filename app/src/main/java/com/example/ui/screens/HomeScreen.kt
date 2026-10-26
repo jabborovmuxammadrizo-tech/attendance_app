@@ -85,7 +85,11 @@ fun HomeScreen(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween
         ) {
-          Column {
+          Column(
+            modifier = Modifier
+              .weight(1f, fill = false)
+              .padding(end = 8.dp)
+          ) {
             Text(
               text = "Welcome, Teacher",
               style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -116,7 +120,9 @@ fun HomeScreen(
               Text(
                 text = "Offline Mode",
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 1,
+                softWrap = false
               )
             }
           }

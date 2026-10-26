@@ -1,7 +1,9 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.SortOrder
@@ -558,14 +561,21 @@ private fun StudentDirectoryCard(
           )
         }
         Spacer(modifier = Modifier.width(10.dp))
-        Column {
+        Column(modifier = Modifier.weight(1f, fill = false)) {
           Text(
             text = student.name,
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
           )
           Spacer(modifier = Modifier.height(2.dp))
-          Row(verticalAlignment = Alignment.CenterVertically) {
+          // Scrolls sideways instead of wrapping letter-by-letter when the chip + ID +
+          // attendance text together don't fit the card's width.
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.horizontalScroll(rememberScrollState())
+          ) {
             Surface(
               shape = RoundedCornerShape(4.dp),
               color = MaterialTheme.colorScheme.surfaceVariant
@@ -574,6 +584,8 @@ private fun StudentDirectoryCard(
                 text = student.groupName,
                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, fontSize = 10.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                softWrap = false,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
               )
             }
@@ -581,14 +593,18 @@ private fun StudentDirectoryCard(
             Text(
               text = student.studentIdNumber,
               style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-              color = MaterialTheme.colorScheme.onSurfaceVariant
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              maxLines = 1,
+              softWrap = false
             )
             if (attendancePercent != null) {
               Spacer(modifier = Modifier.width(6.dp))
               Text(
                 text = "• $attendancePercent% attendance",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
-                color = if (attendancePercent >= 80) PresentGreen else MaterialTheme.colorScheme.error
+                color = if (attendancePercent >= 80) PresentGreen else MaterialTheme.colorScheme.error,
+                maxLines = 1,
+                softWrap = false
               )
             }
           }
