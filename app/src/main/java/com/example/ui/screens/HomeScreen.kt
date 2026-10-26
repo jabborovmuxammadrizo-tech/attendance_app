@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -254,7 +255,7 @@ fun HomeScreen(
       }
     }
 
-    // 4. MAIN SECTIONS GRID: GROUPS, STUDENTS, REPORTS, HISTORY
+    // 4. MAIN SECTIONS GRID: GROUPS, STUDENTS, REPORTS, TEACHERS, HISTORY, SETTINGS
     item {
       Text(
         text = "Management Modules",
@@ -265,98 +266,105 @@ fun HomeScreen(
     }
 
     item {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        MainSectionCard(
+      val modules = listOf(
+        ModuleCardSpec(
           title = "👥 GROUPS",
           subtitle = "${state.groups.size} Active Classes",
           icon = Icons.Default.Groups,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_groups"),
+          testTag = "btn_groups",
           onClick = { onNavigate(Screen.GROUPS) }
-        )
-
-        MainSectionCard(
+        ),
+        ModuleCardSpec(
           title = "🎓 STUDENTS",
           subtitle = "${state.students.size} Enrolled",
           icon = Icons.Default.School,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = Color(0xFF0D9488), // Teal
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_students"),
+          testTag = "btn_students",
           onClick = { onNavigate(Screen.STUDENTS) }
-        )
-      }
-    }
-
-    item {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        MainSectionCard(
+        ),
+        ModuleCardSpec(
           title = "📊 REPORTS",
           subtitle = "Statistics & Export",
           icon = Icons.Default.Assessment,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = Color(0xFFF59E0B), // Amber
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_reports"),
+          testTag = "btn_reports",
           onClick = { onNavigate(Screen.REPORTS) }
-        )
-
-        MainSectionCard(
+        ),
+        ModuleCardSpec(
           title = "👨‍🏫 TEACHERS",
           subtitle = "${state.teachers.size} Staff",
           icon = Icons.Default.Person,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = Color(0xFFEF4444), // Red
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_teachers"),
+          testTag = "btn_teachers",
           onClick = { onNavigate(Screen.TEACHERS) }
-        )
-      }
-    }
-    
-    item {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-      ) {
-        MainSectionCard(
+        ),
+        ModuleCardSpec(
           title = "🗂 HISTORY",
           subtitle = "${state.historySessions.size} Saved Logs",
           icon = Icons.Default.History,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = Color(0xFF6366F1), // Indigo
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_history"),
+          testTag = "btn_history",
           onClick = { onNavigate(Screen.HISTORY) }
-        )
-        MainSectionCard(
+        ),
+        ModuleCardSpec(
           title = "⚙️ SETTINGS",
           subtitle = "Backup & Prefs",
           icon = Icons.Default.Settings,
-          containerColor = MaterialTheme.colorScheme.surface,
           iconTint = Color(0xFF64748B), // Slate
-          modifier = Modifier
-            .weight(1f)
-            .testTag("btn_settings"),
+          testTag = "btn_settings",
           onClick = { onNavigate(Screen.SETTINGS) }
         )
+      )
+
+      // Adaptive column count: stays 2-up on a normal phone, but opens up to 3 or 4
+      // columns on wider screens (tablets, foldables, split-screen / multi-window on
+      // Huawei and other OEM devices) instead of leaving half the row empty.
+      BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columns = when {
+          maxWidth >= 840.dp -> 4
+          maxWidth >= 600.dp -> 3
+          else -> 2
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+          modules.chunked(columns).forEach { rowModules ->
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              rowModules.forEach { module ->
+                MainSectionCard(
+                  title = module.title,
+                  subtitle = module.subtitle,
+                  icon = module.icon,
+                  containerColor = MaterialTheme.colorScheme.surface,
+                  iconTint = module.iconTint,
+                  modifier = Modifier
+                    .weight(1f)
+                    .testTag(module.testTag),
+                  onClick = module.onClick
+                )
+              }
+              // Pad out a short last row so its cards stay the same width as full rows.
+              repeat(columns - rowModules.size) {
+                Spacer(modifier = Modifier.weight(1f))
+              }
+            }
+          }
+        }
       }
     }
   }
 }
+
+private data class ModuleCardSpec(
+  val title: String,
+  val subtitle: String,
+  val icon: ImageVector,
+  val iconTint: Color,
+  val testTag: String,
+  val onClick: () -> Unit
+)
 
 @Composable
 private fun QuickGroupChip(
